@@ -161,7 +161,8 @@ namespace card_tools {
                 bool has_next() {
                     return is_end;
                 }
-                std::vector<Card> get_next() { // не предназначена для использования в многопоточном режиме
+                //  this function does not support multithreading - use get_if_has if needed
+                std::vector<Card> get_next() { 
                     std::vector<Card> res(temp_set.size());
                     for (size_t i = 0; i < res.size(); i++) res[i] = in_deck[temp_set[i]];
                     gen_next();
@@ -342,16 +343,17 @@ namespace card_tools {
                     }
                     return res;
                 }
-                // карты в comb идут в порядке их сравнения в случае равенства комбинациий т.е.
-                // старшая/стрит/флэш/рояль -> сортировка
-                // пара/пары/тройка/(тройка, затем пара)/четвёрка , затем оставшиеся
-                // при стрите с туза туз идёт первым
+                // the cards in the comb go in the order of their comparison in case of equality of combinations, i.e.
+                // senior/straight/flush/royal -> sort
+                //pair/pairs/three/(three, then a pair)/four , then the remaining ones 
+                // when straight with an ace , the ace goes first
             };
 
             struct BasePockerExtractor {
+                // extractors input must be sorted
                 static standart_comb extract_comb(const std::vector<Card>& inp) {
                     return standart_comb();
-                } // на входе ожидается отсортированный массив
+                }
             protected:
                 template <typename T, typename B>
                 static standart_comb construct_comb(T&& name, B&& comb) {
@@ -516,7 +518,8 @@ namespace card_tools {
                 FRIEND_TEST(card_tools::tests::PockerExtractorsTest, FullHouseExtractorTest);
             };
 
-            struct StraightFlushExtractor : BasePockerExtractor { // число мастей не должно превышать 64. Карт на столе не более 9
+            // suits <= 64, cards in vector <= 9
+            struct StraightFlushExtractor : BasePockerExtractor {
                 static standart_comb extract_comb(const std::vector<Card>& inp) {
                     std::array<unsigned int, Card::suits_num> suits;
                     for (size_t i = 0; i < suits.size(); i++) suits[i] = 0;
@@ -608,6 +611,6 @@ namespace card_tools {
         template <unsigned int size>
         static std::vector<double> get_equity(const unique_cards_deck<st_card>& deck, const std::array<st_card, size>& in_game, const std::vector<hand>& h);
         static std::map<rules::comb_name, double> get_all_combs_probability(std::vector<st_card>& in_game, const unique_cards_deck<st_card>& deck);
-        static holdem_combination extract_highest_comb(const std::vector<st_card>& inp); //вход должен быть отсортирован
+        static holdem_combination extract_highest_comb(const std::vector<st_card>& inp); //input must be sorted
     };
 }
